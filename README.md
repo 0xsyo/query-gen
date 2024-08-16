@@ -1,5 +1,3 @@
-# query-gen
-
 # Query Generator Bot
 
 Ini adalah alat yang menggunakan [Pyrogram](https://docs.pyrogram.org/) untuk mengelola sesi Telegram dan menghasilkan query dari bot. Kode ini berguna untuk berinteraksi dengan bot Telegram melalui API dan menyimpan query ke file teks.
@@ -22,15 +20,16 @@ Ini adalah alat yang menggunakan [Pyrogram](https://docs.pyrogram.org/) untuk me
 1. **Clone repositori ini:**
 
    ```bash
-   git clone https://github.com/Syazaaulia/query-gen.git
-   cd query-gen
+   git clone https://github.com/0xsyo/query-generator.git
+   cd query-generator
 
    python3 -m venv venv
    source venv/bin/activate  # Untuk Linux/MacOS
    venv\Scripts\activate     # Untuk Windows
 
    pip install -r requirements.txt
-   python3 query_gen.py
+   python main.py
+   python3 main.py
 
 
 
