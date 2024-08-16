@@ -6,19 +6,41 @@ import os
 import asyncio
 from colorama import init, Fore, Style
 
-# Inisialisasi colorama
+# Initialize colorama
 init()
 
-# Pengaturan logging
+# Setup logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Mengatur level logging untuk pyrogram menjadi WARNING
+# Set logging level for pyrogram to WARNING
 logging.getLogger("pyrogram").setLevel(logging.WARNING)
 
 # Ganti dengan path folder sesi
 SESSIONS_FOLDER = 'sessions'
 QUERY_FILE = "query.txt"
+
+# ASCII art with rainbow colors
+ASCII_ART = r"""
+
+ _______                          
+|     __|.--.--.---.-.-----.---.-.
+|__     ||  |  |  _  |-- __|  _  |
+|_______||___  |___._|_____|___._|
+         |_____|                  
+
+"""
+
+# Rainbow colors
+RAINBOW_COLORS = [
+    Fore.RED, Fore.GREEN, Fore.YELLOW, Fore.BLUE, Fore.MAGENTA, Fore.CYAN
+]
+
+def print_rainbow_ascii_art():
+    """Prints ASCII art in rainbow colors."""
+    for i, line in enumerate(ASCII_ART.split('\n')):
+        color = RAINBOW_COLORS[i % len(RAINBOW_COLORS)]
+        print(color + line + Style.RESET_ALL)
 
 async def generate_query(session_name, api_id, api_hash, bot_username, bot_url):
     """Mengambil query dari bot dan menyimpannya ke query.txt"""
@@ -27,10 +49,10 @@ async def generate_query(session_name, api_id, api_hash, bot_username, bot_url):
             if not client.is_connected:
                 await client.start()
             
-            # Menyelesaikan peer untuk bot
+            # Resolve the peer for the bot
             peer = await client.resolve_peer(bot_username)
             
-            # Meminta webview
+            # Request the webview
             webview = await client.invoke(functions.messages.RequestWebView(
                 peer=peer,
                 bot=peer,
@@ -39,65 +61,68 @@ async def generate_query(session_name, api_id, api_hash, bot_username, bot_url):
                 url=bot_url
             ))
             
-            # Mengekstrak query dari URL
+            # Extract the query from the URL
             query = unquote(webview.url.split("&tgWebAppVersion=")[0].split("#tgWebAppData=")[1])
             
-            # Menyimpan query ke dalam query.txt
-            with open(QUERY_FILE, "a") as file:  # Mode append
+            # Save the query to query.txt
+            with open(QUERY_FILE, "a") as file:  # Append mode
                 file.write(f"{query}\n")
             
-            print(Fore.GREEN + f"Data untuk {session_name} disimpan ke {QUERY_FILE}" + Style.RESET_ALL)
+            print(Fore.GREEN + f"Saved data for {session_name} to {QUERY_FILE}" + Style.RESET_ALL)
     
     except errors.FloodWait as e:
-        logger.error(f"Kesalahan flood wait untuk {session_name}: {str(e)}")
+        logger.error(f"Flood wait error for {session_name}: {str(e)}")
     except Exception as e:
-        print(Fore.RED + f"Gagal menyimpan data untuk {session_name} ke {QUERY_FILE}" + Style.RESET_ALL)
-        logger.error(f"Kesalahan saat mengambil data query untuk {session_name}: {str(e)}")
+        print(Fore.RED + f"Failed to save data for {session_name} to {QUERY_FILE}" + Style.RESET_ALL)
+        logger.error(f"Error retrieving query data for {session_name}: {str(e)}")
 
 async def create_new_session(session_name, api_id, api_hash):
     """Membuat sesi baru dan menyimpannya ke dalam folder sesi"""
     try:
         async with Client(session_name, api_id=api_id, api_hash=api_hash) as client:
             # Tidak perlu memanggil client.start() di sini karena klien sudah terhubung secara otomatis
-            logger.info(f"Sesi baru dibuat: {session_name}")
+            logger.info(f"Created new session: {session_name}")
     except Exception as e:
-        logger.error(f"Kesalahan saat membuat sesi baru {session_name}: {str(e)}")
+        logger.error(f"Error creating new session {session_name}: {str(e)}")
 
 async def add_session(api_id, api_hash):
     """Fungsi untuk menambahkan sesi baru"""
-    session_name = input("Masukkan nama untuk sesi baru: ")
+    session_name = input("Enter the name for the new session: ")
     await create_new_session(os.path.join(SESSIONS_FOLDER, session_name), api_id, api_hash)
 
 async def generate_queries(api_id, api_hash, bot_username, bot_url):
     """Fungsi untuk menghasilkan query dari sesi yang ada"""
     while True:
-        # Mendapatkan semua file sesi di folder sessions
+        # Get all session files in the sessions folder
         sessions = [f[:-8] for f in os.listdir(SESSIONS_FOLDER) if f.endswith('.session')]
         
-        # Mengosongkan file query.txt sebelum memulai
+        # Empty the query.txt file before starting
         if os.path.exists(QUERY_FILE):
             os.remove(QUERY_FILE)
         
         tasks = []
         for session_name in sessions:
-            # Menghasilkan query untuk setiap sesi yang ada
+            # Generate queries for each existing session
             tasks.append(generate_query(os.path.join(SESSIONS_FOLDER, session_name), api_id, api_hash, bot_username, bot_url))
         
         await asyncio.gather(*tasks)
         
-        # Menunggu 6 jam sebelum menghasilkan query lagi
-        print(Fore.YELLOW + "Menunggu 6 jam sebelum pembuatan query berikutnya..." + Style.RESET_ALL)
-        await asyncio.sleep(21600)  # 21600 detik = 6 jam
+        # Wait for 6 hours before generating queries again
+        print(Fore.YELLOW + "Waiting for 6 hours before the next query generation..." + Style.RESET_ALL)
+        await asyncio.sleep(21600)  # 21600 seconds = 6 hours
 
 async def main():
-    """Fungsi utama untuk memilih antara menambah sesi atau menghasilkan query"""
-    # Placeholder untuk API ID dan API hash jika diperlukan
-    api_id = '599686'  # Ganti dengan API ID yang sebenarnya
-    api_hash = '12b428f536a2e7cc76296db0805e91e9'  # Ganti dengan API Hash yang sebenarnya
+    """Main function to choose between adding a session or generating queries"""
+    # Placeholder for API ID and API hash if needed
+    api_id = 'YOUR_API_ID'  # Replace with actual API ID
+    api_hash = 'YOUR_API_HASH'  # Replace with actual API hash
 
-    # Membuat folder sessions jika belum ada
+    # Create sessions folder if it doesn't exist
     if not os.path.exists(SESSIONS_FOLDER):
         os.makedirs(SESSIONS_FOLDER)
+
+    # Print the ASCII art in rainbow colors
+    print_rainbow_ascii_art()
 
     print("Pilih opsi:")
     print("1. Tambah Sesi")
@@ -107,8 +132,8 @@ async def main():
     if choice == '1':
         await add_session(api_id, api_hash)
     elif choice == '2':
-        bot_username = input("Masukkan username bot (contoh: tabizoobot): ")
-        bot_url = input("Masukkan URL Header Bot (contoh: https://app.tabibot.com): ")
+        bot_username = input("Enter the bot username (e.g tabizoobot): ")
+        bot_url = input("Request URL Header Bot(e.g https://app.tabibot.com): ")
         await generate_queries(api_id, api_hash, bot_username, bot_url)
     else:
         print("Pilihan tidak valid")
